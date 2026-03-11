@@ -1,6 +1,6 @@
 import { StyleSheet, Text, type TextProps } from 'react-native';
 
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { useThemeColor } from '@/presentation/theme/hooks/use-theme-color';
 
 export type ThemedTextProps = TextProps & {
   lightColor?: string;
@@ -46,6 +46,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
+    fontFamily: 'KanitBold',
     lineHeight: 32,
   },
   subtitle: {
