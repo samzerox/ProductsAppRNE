@@ -1,0 +1,170 @@
+import { Ionicons } from '@expo/vector-icons';
+import { CameraType, CameraView, useCameraPermissions } from 'expo-camera';
+import * as ImagePicker from 'expo-image-picker';
+import * as MediaLibrary from 'expo-media-library';
+import { router } from 'expo-router';
+import { useRef, useState } from 'react';
+import { Alert, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+
+export default function CameraScreen() {
+
+  const [facing, setFacing] = useState<CameraType>('back');
+  const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [selectedImage, setSelectedImage] = useState<string>();
+
+  const cameraRef = useRef<CameraView>(null);
+
+  const requestPermissions = async () => {
+    const { status } = await requestCameraPermission();
+
+    if (status !== 'granted') {
+      Alert.alert('Permiso requerido', 'Necesitamos acceso a la cámara');
+    }
+  };
+
+  // 📸 Tomar foto
+  const takePicture = async () => {
+
+    if (!cameraRef.current) return;
+
+    const picture = await cameraRef.current.takePictureAsync({
+      quality: 0.7
+    });
+
+    if (!picture?.uri) return;
+
+    setSelectedImage(picture.uri);
+  };
+
+  // 🖼 Abrir galería
+  const openGallery = async () => {
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.7
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0].uri);
+    }
+  };
+
+  // 💾 Guardar imagen
+  const saveImage = async () => {
+
+    if (!selectedImage) return;
+
+    await MediaLibrary.saveToLibraryAsync(selectedImage);
+
+    router.dismiss();
+  };
+
+  const retakePhoto = () => {
+    setSelectedImage(undefined);
+  };
+
+  const flipCamera = () => {
+    setFacing(current => current === 'back' ? 'front' : 'back');
+  };
+
+  if (!cameraPermission) return <View />;
+
+  if (!cameraPermission.granted) {
+    return (
+      <View style={styles.center}>
+        <TouchableOpacity onPress={requestPermissions}>
+          <Ionicons name="camera-outline" size={40}/>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // 📷 PREVIEW
+  if (selectedImage) {
+    return (
+      <View style={styles.container}>
+
+        <Image source={{ uri: selectedImage }} style={styles.camera}/>
+
+        <TouchableOpacity style={styles.confirm} onPress={saveImage}>
+          <Ionicons name="checkmark" size={30} color="white"/>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.cancel} onPress={retakePhoto}>
+          <Ionicons name="close" size={30} color="white"/>
+        </TouchableOpacity>
+
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+
+      <CameraView ref={cameraRef} style={styles.camera} facing={facing}/>
+
+      <TouchableOpacity style={styles.shutter} onPress={takePicture} />
+
+      <TouchableOpacity style={styles.flip} onPress={flipCamera}>
+        <Ionicons name="camera-reverse-outline" size={30} color="white"/>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.gallery} onPress={openGallery}>
+        <Ionicons name="images-outline" size={30} color="white"/>
+      </TouchableOpacity>
+
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+
+  container:{
+    flex:1
+  },
+
+  camera:{
+    flex:1
+  },
+
+  center:{
+    flex:1,
+    justifyContent:'center',
+    alignItems:'center'
+  },
+
+  shutter:{
+    position:'absolute',
+    bottom:70,
+    alignSelf:'center',
+    width:70,
+    height:70,
+    borderRadius:35,
+    backgroundColor:'white'
+  },
+
+  flip:{
+    position:'absolute',
+    bottom:70,
+    right:30
+  },
+
+  gallery:{
+    position:'absolute',
+    bottom:70,
+    left:30
+  },
+
+  confirm:{
+    position:'absolute',
+    bottom:70,
+    alignSelf:'center'
+  },
+
+  cancel:{
+    position:'absolute',
+    bottom:70,
+    right:30
+  }
+
+});

@@ -4,6 +4,8 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 import { useColorScheme } from '@/presentation/theme/hooks/use-color-scheme';
 import { useThemeColor } from '@/presentation/theme/hooks/use-theme-color';
 import { View } from 'react-native';
@@ -11,6 +13,14 @@ import { View } from 'react-native';
 export const unstable_settings = {
   anchor: '(tabs)',
 };
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+    }
+  }
+})
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -26,18 +36,17 @@ export default function RootLayout() {
 
   return (
     <View style={{backgroundColor: backgroundColor, flex: 1}}>
+      <QueryClientProvider client={queryClient}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack
           screenOptions={{
             headerShown: false,
           }}
         >
-
-          {/* <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} /> */}
         </Stack>
         <StatusBar style="auto" />
       </ThemeProvider>
+      </QueryClientProvider>
     </View>
   );
 }
